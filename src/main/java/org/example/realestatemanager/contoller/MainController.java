@@ -1,5 +1,6 @@
 package org.example.realestatemanager.contoller;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -16,6 +17,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import org.example.realestatemanager.Main;
 import org.example.realestatemanager.entity.Property;
+import org.example.realestatemanager.entity.User;
 import org.example.realestatemanager.utils.DatabaseUtil;
 
 import java.io.IOException;
@@ -29,6 +31,7 @@ import java.util.function.Predicate;
  */
 public class MainController {
 
+    // --- Property Table ---
     @FXML
     private TableView<Property> propertyTable;
     @FXML
@@ -44,14 +47,23 @@ public class MainController {
     @FXML
     private TableColumn<Property, Number> priceColumn;
 
+    // --- User Table ---
+    @FXML
+    private TableView<User> userTable;
+    @FXML
+    private TableColumn<User, Number> userIdColumn;
+    @FXML
+    private TableColumn<User, String> userNameColumn;
+    @FXML
+    private TableColumn<User, String> userEmailColumn;
+
     @FXML
     private Pagination pagination;
 
     private static final int ROWS_PER_PAGE = 20;
 
-    // Existing input fields for adding properties
     @FXML
-    private TextField ownerField;
+    private ComboBox<User> ownerComboBox;
     @FXML
     private TextField descriptionField;
     @FXML
@@ -61,7 +73,6 @@ public class MainController {
     @FXML
     private TextField priceField;
 
-    // New filter input fields
     @FXML
     private TextField generalFilterField;
 
@@ -75,9 +86,9 @@ public class MainController {
     private TextField filterMaxPriceField;
 
     private ObservableList<Property> propertyList = FXCollections.observableArrayList();
+    private ObservableList<User> userList = FXCollections.observableArrayList();
     private DatabaseUtil db;
 
-    // Filtered and Sorted Lists
     private FilteredList<Property> filteredData;
     private SortedList<Property> sortedData;
 
@@ -87,30 +98,36 @@ public class MainController {
     @FXML
     private void initialize() {
         db = new DatabaseUtil();
+        loadUsers();
         loadProperties();
 
-        // Initialize table columns
         idColumn.setCellValueFactory(cellData -> cellData.getValue().idProperty());
-        ownerColumn.setCellValueFactory(cellData -> cellData.getValue().ownerProperty());
+        ownerColumn.setCellValueFactory(cellData -> {
+            User owner = cellData.getValue().getOwner();
+            return owner != null ? owner.nameProperty() : new SimpleStringProperty("Unknown");
+        });
         descriptionColumn.setCellValueFactory(cellData -> cellData.getValue().descriptionProperty());
         locationColumn.setCellValueFactory(cellData -> cellData.getValue().locationProperty());
         sizeColumn.setCellValueFactory(cellData -> cellData.getValue().sizeProperty());
         priceColumn.setCellValueFactory(cellData -> cellData.getValue().priceProperty());
 
-        // Initialize FilteredList with propertyList
+        userTable.setItems(userList);
+
+        userIdColumn.setCellValueFactory(cellData -> cellData.getValue().idProperty());
+        userNameColumn.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
+        userEmailColumn.setCellValueFactory(cellData -> cellData.getValue().emailProperty());
+
         filteredData = new FilteredList<>(propertyList, p -> true);
 
-        // Bind the SortedList comparator to the TableView comparator
         sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(propertyTable.comparatorProperty());
 
-        // Set the SortedList as the items for the TableView
         propertyTable.setItems(sortedData);
 
-        // Add listeners to filter input fields
+        ownerComboBox.setItems(userList);
+
         addFilterListeners();
 
-        // Handle row double-click for editing
         propertyTable.setRowFactory(_ -> {
             TableRow<Property> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -120,7 +137,6 @@ public class MainController {
                 }
             });
 
-            // Context menu for right-click
             row.setOnContextMenuRequested(event -> {
                 if (!row.isEmpty()) {
                     ContextMenu contextMenu = new ContextMenu();
@@ -136,6 +152,30 @@ public class MainController {
             return row;
         });
 
+        userTable.setRowFactory(_ -> {
+            TableRow<User> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (!row.isEmpty() && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                    User clickedUser = row.getItem();
+                    openEditUserWindow(clickedUser);
+                }
+            });
+
+            row.setOnContextMenuRequested(event -> {
+                if (!row.isEmpty()) {
+                    ContextMenu contextMenu = new ContextMenu();
+                    MenuItem editItem = new MenuItem("Edit");
+                    editItem.setOnAction(e -> openEditUserWindow(row.getItem()));
+                    MenuItem deleteItem = new MenuItem("Delete");
+                    deleteItem.setOnAction(e -> deleteUser(row.getItem()));
+                    contextMenu.getItems().addAll(editItem, deleteItem);
+                    contextMenu.show(row, event.getScreenX(), event.getScreenY());
+                }
+            });
+
+            return row;
+        });
+
         setupPagination();
     }
 
@@ -143,7 +183,6 @@ public class MainController {
      * Adds listeners to the filter input fields to update the FilteredList predicate.
      */
     private void addFilterListeners() {
-        // Owner filter
         generalFilterField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateFilters();
         });
@@ -152,17 +191,14 @@ public class MainController {
             updateFilters();
         });
 
-        // Location filter
         filterLocationField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateFilters();
         });
 
-        // Min Price filter
         filterMinPriceField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateFilters();
         });
 
-        // Max Price filter
         filterMaxPriceField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateFilters();
         });
@@ -173,15 +209,13 @@ public class MainController {
      */
     private void updateFilters() {
         filteredData.setPredicate(property -> {
-            // If no filters are applied, display all properties
             if (property == null) {
                 return false;
             }
 
-            // General filter
             String generalFilter = generalFilterField.getText().toLowerCase().trim();
             if (!generalFilter.isEmpty()) {
-                if (!(property.getOwner().toLowerCase().contains(generalFilter) ||
+                if (!(property.getOwner() != null && property.getOwner().getName().toLowerCase().contains(generalFilter) ||
                         property.getLocation().toLowerCase().contains(generalFilter) ||
                         property.getDescription().toLowerCase().contains(generalFilter) ||
                         String.valueOf(property.getPrice()).contains(generalFilter) ||
@@ -190,26 +224,24 @@ public class MainController {
                 }
             }
 
-            // Owner filter
             String ownerFilter = filterOwnerField.getText().toLowerCase().trim();
-            if (!ownerFilter.isEmpty() && !property.getOwner().toLowerCase().contains(ownerFilter)) {
-                return false;
+            if (!ownerFilter.isEmpty()) {
+                if (property.getOwner() == null || !property.getOwner().getName().toLowerCase().contains(ownerFilter)) {
+                    return false;
+                }
             }
 
-            // Location filter
             String locationFilter = filterLocationField.getText().toLowerCase().trim();
             if (!locationFilter.isEmpty() && !property.getLocation().toLowerCase().contains(locationFilter)) {
                 return false;
             }
 
-            // Min Price filter
             String minPriceText = filterMinPriceField.getText().trim();
             double minPrice = 0.0;
             if (!minPriceText.isEmpty()) {
                 try {
                     minPrice = Double.parseDouble(minPriceText);
                 } catch (NumberFormatException e) {
-                    // Invalid input; could show an alert or ignore the filter
                     return false;
                 }
                 if (property.getPrice() < minPrice) {
@@ -217,14 +249,12 @@ public class MainController {
                 }
             }
 
-            // Max Price filter
             String maxPriceText = filterMaxPriceField.getText().trim();
             double maxPrice = Double.MAX_VALUE;
             if (!maxPriceText.isEmpty()) {
                 try {
                     maxPrice = Double.parseDouble(maxPriceText);
                 } catch (NumberFormatException e) {
-                    // Invalid input; could show an alert or ignore the filter
                     return false;
                 }
                 if (property.getPrice() > maxPrice) {
@@ -232,11 +262,9 @@ public class MainController {
                 }
             }
 
-            // All filters passed
             return true;
         });
 
-        // After filtering, reset pagination
         setupPagination();
     }
 
@@ -270,10 +298,25 @@ public class MainController {
     private void loadProperties() {
         propertyList.clear();
         try {
-            propertyList.addAll(db.getAllProperties());
+            List<Property> properties = db.getAllProperties();
+            propertyList.addAll(properties);
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Load Error", e.getMessage());
         }
+    }
+
+    /**
+     * Loads all users from the database into the user list.
+     */
+    private void loadUsers() {
+        userList.clear();
+        try {
+            List<User> users = db.getAllUsers();
+            userList.addAll(users);
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Load Error", e.getMessage());
+        }
+        userTable.setItems(userList);
     }
 
     /**
@@ -283,15 +326,14 @@ public class MainController {
      */
     @FXML
     private void handleAddProperty(ActionEvent event) {
-        String owner = ownerField.getText().trim();
+        User selectedUser = ownerComboBox.getSelectionModel().getSelectedItem();
         String description = descriptionField.getText().trim();
         String location = locationField.getText().trim();
         String sizeText = sizeField.getText().trim();
         String priceText = priceField.getText().trim();
 
-        // Validate inputs
-        if (owner.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Input Error", "Owner field cannot be empty.");
+        if (selectedUser == null) {
+            showAlert(Alert.AlertType.ERROR, "Input Error", "Please select an owner from the list.");
             return;
         }
 
@@ -305,12 +347,12 @@ public class MainController {
             return;
         }
 
-        Property newProperty = new Property(0, owner, description, location, size, price);
+        Property newProperty = new Property(0, selectedUser.getId(), description, location, size, price);
         try {
             db.addProperty(newProperty);
-            loadProperties(); // Reload properties to include the new one
-            updateFilters(); // Re-apply filters
-            clearInputFields();
+            loadProperties();
+            updateFilters();
+            clearPropertyInputFields();
             showAlert(Alert.AlertType.INFORMATION, "Success", "Property added successfully.");
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Add Error", e.getMessage());
@@ -318,10 +360,10 @@ public class MainController {
     }
 
     /**
-     * Clears the input fields in the form.
+     * Clears the input fields in the property form.
      */
-    private void clearInputFields() {
-        ownerField.clear();
+    private void clearPropertyInputFields() {
+        ownerComboBox.getSelectionModel().clearSelection();
         descriptionField.clear();
         locationField.clear();
         sizeField.clear();
@@ -350,6 +392,9 @@ public class MainController {
             stage.setScene(new Scene(root));
             stage.showAndWait();
 
+            loadProperties();
+            updateFilters();
+
         } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Load Error", e.getMessage());
         }
@@ -360,6 +405,7 @@ public class MainController {
      */
     public void refreshTable() {
         loadProperties();
+        loadUsers();
         updateFilters();
     }
 
@@ -386,6 +432,92 @@ public class MainController {
         }
     }
 
+    // ------------------- User Management Methods -------------------
+
+    /**
+     * Handles the action of adding a new user.
+     *
+     * @param event the action event
+     */
+    @FXML
+    private void handleAddUser(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("addUser.fxml"));
+            Parent root = loader.load();
+
+            AddUserController controller = loader.getController();
+            controller.setDatabase(db);
+            controller.setMainController(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Add New User");
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(userTable.getScene().getWindow());
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+
+            loadUsers();
+
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Load Error", e.getMessage());
+        }
+    }
+
+    /**
+     * Opens the edit window for a selected user.
+     *
+     * @param user the user to edit
+     */
+    private void openEditUserWindow(User user) {
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("editUser.fxml"));
+            Parent root = loader.load();
+
+            EditUserController controller = loader.getController();
+            controller.setUser(user);
+            controller.setDatabase(db);
+            controller.setMainController(this);
+
+            Stage stage = new Stage();
+            stage.setTitle("Edit User");
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(userTable.getScene().getWindow());
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+
+            loadUsers();
+            loadProperties();
+            updateFilters();
+
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Load Error", e.getMessage());
+        }
+    }
+
+    /**
+     * Deletes a selected user.
+     *
+     * @param user the user to delete
+     */
+    private void deleteUser(User user) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Delete Confirmation");
+        confirm.setHeaderText(null);
+        confirm.setContentText("Are you sure you want to delete this user? All associated properties will also be deleted.");
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                db.deleteUser(user.getId());
+                loadUsers();
+                loadProperties();
+                updateFilters();
+                showAlert(Alert.AlertType.INFORMATION, "Success", "User deleted successfully.");
+            } catch (SQLException e) {
+                showAlert(Alert.AlertType.ERROR, "Delete Error", e.getMessage());
+            }
+        }
+    }
+
     /**
      * Shows an alert dialog.
      *
@@ -395,10 +527,22 @@ public class MainController {
      */
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
-        alert.initOwner(propertyTable.getScene().getWindow());
+        Stage stage = (Stage) propertyTable.getScene().getWindow();
+        alert.initOwner(stage);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    /**
+     * Handles the exit action from the menu.
+     *
+     * @param event the action event
+     */
+    @FXML
+    private void handleExit(ActionEvent event) {
+        Stage stage = (Stage) propertyTable.getScene().getWindow();
+        stage.close();
     }
 }

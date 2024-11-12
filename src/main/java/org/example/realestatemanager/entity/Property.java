@@ -7,163 +7,117 @@ import javafx.beans.property.*;
  */
 public class Property {
     private final IntegerProperty id;
-    private final StringProperty owner;
+    private final IntegerProperty ownerId; // Foreign key to User
     private final StringProperty description;
     private final StringProperty location;
     private final DoubleProperty size;
     private final DoubleProperty price;
 
+    private User owner;
+
     /**
      * Default constructor initializing the property with default values.
      */
     public Property() {
-        this(0, "", "", "", 0.0, 0.0);
+        this(0, 0, "", "", 0.0, 0.0);
     }
 
     /**
      * Parameterized constructor initializing the property with specified values.
      *
-     * @param id the ID of the property
-     * @param owner the owner of the property
+     * @param id          the ID of the property
+     * @param ownerId     the ID of the owner (user)
      * @param description the description of the property
-     * @param location the location of the property
-     * @param size the size of the property
-     * @param price the price of the property
+     * @param location    the location of the property
+     * @param size        the size of the property
+     * @param price       the price of the property
      */
-    public Property(int id, String owner, String description, String location, double size, double price) {
+    public Property(int id, int ownerId, String description, String location, double size, double price) {
         this.id = new SimpleIntegerProperty(id);
-        this.owner = new SimpleStringProperty(owner);
+        this.ownerId = new SimpleIntegerProperty(ownerId);
         this.description = new SimpleStringProperty(description);
         this.location = new SimpleStringProperty(location);
         this.size = new SimpleDoubleProperty(size);
         this.price = new SimpleDoubleProperty(price);
     }
 
-    // Getters and Setters
+    public int getId() {
+        return id.get();
+    }
 
-    /**
-     * Gets the ID of the property.
-     *
-     * @return the ID of the property
-     */
-    public int getId() { return id.get(); }
+    public void setId(int id) {
+        this.id.set(id);
+    }
 
-    /**
-     * Sets the ID of the property.
-     *
-     * @param id the ID to set
-     */
-    public void setId(int id) { this.id.set(id); }
+    public IntegerProperty idProperty() {
+        return id;
+    }
 
-    /**
-     * Gets the ID property.
-     *
-     * @return the ID property
-     */
-    public IntegerProperty idProperty() { return id; }
+    public int getOwnerId() {
+        return ownerId.get();
+    }
 
-    /**
-     * Gets the owner of the property.
-     *
-     * @return the owner of the property
-     */
-    public String getOwner() { return owner.get(); }
+    public void setOwnerId(int ownerId) {
+        this.ownerId.set(ownerId);
+    }
 
-    /**
-     * Sets the owner of the property.
-     *
-     * @param owner the owner to set
-     */
-    public void setOwner(String owner) { this.owner.set(owner); }
+    public IntegerProperty ownerIdProperty() {
+        return ownerId;
+    }
 
-    /**
-     * Gets the owner property.
-     *
-     * @return the owner property
-     */
-    public StringProperty ownerProperty() { return owner; }
+    public String getDescription() {
+        return description.get();
+    }
 
-    /**
-     * Gets the description of the property.
-     *
-     * @return the description of the property
-     */
-    public String getDescription() { return description.get(); }
+    public void setDescription(String description) {
+        this.description.set(description);
+    }
 
-    /**
-     * Sets the description of the property.
-     *
-     * @param description the description to set
-     */
-    public void setDescription(String description) { this.description.set(description); }
+    public StringProperty descriptionProperty() {
+        return description;
+    }
 
-    /**
-     * Gets the description property.
-     *
-     * @return the description property
-     */
-    public StringProperty descriptionProperty() { return description; }
+    public String getLocation() {
+        return location.get();
+    }
 
-    /**
-     * Gets the location of the property.
-     *
-     * @return the location of the property
-     */
-    public String getLocation() { return location.get(); }
+    public void setLocation(String location) {
+        this.location.set(location);
+    }
 
-    /**
-     * Sets the location of the property.
-     *
-     * @param location the location to set
-     */
-    public void setLocation(String location) { this.location.set(location); }
+    public StringProperty locationProperty() {
+        return location;
+    }
 
-    /**
-     * Gets the location property.
-     *
-     * @return the location property
-     */
-    public StringProperty locationProperty() { return location; }
+    public double getSize() {
+        return size.get();
+    }
 
-    /**
-     * Gets the size of the property.
-     *
-     * @return the size of the property
-     */
-    public double getSize() { return size.get(); }
+    public void setSize(double size) {
+        this.size.set(size);
+    }
 
-    /**
-     * Sets the size of the property.
-     *
-     * @param size the size to set
-     */
-    public void setSize(double size) { this.size.set(size); }
+    public DoubleProperty sizeProperty() {
+        return size;
+    }
 
-    /**
-     * Gets the size property.
-     *
-     * @return the size property
-     */
-    public DoubleProperty sizeProperty() { return size; }
+    public double getPrice() {
+        return price.get();
+    }
 
-    /**
-     * Gets the price of the property.
-     *
-     * @return the price of the property
-     */
-    public double getPrice() { return price.get(); }
+    public void setPrice(double price) {
+        this.price.set(price);
+    }
 
-    /**
-     * Sets the price of the property.
-     *
-     * @param price the price to set
-     */
-    public void setPrice(double price) { this.price.set(price); }
+    public DoubleProperty priceProperty() {
+        return price;
+    }
 
-    /**
-     * Gets the price property.
-     *
-     * @return the price property
-     */
-    public DoubleProperty priceProperty() { return price; }
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
 }

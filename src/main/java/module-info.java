@@ -10,7 +10,9 @@ module org.example.realestatemanager {
     requires java.sql;
 
     opens org.example.realestatemanager to javafx.fxml;
+    opens org.example.realestatemanager.contoller to javafx.fxml;
+
     exports org.example.realestatemanager;
     exports org.example.realestatemanager.contoller;
-    opens org.example.realestatemanager.contoller to javafx.fxml;
+    exports org.example.realestatemanager.entity;
 }

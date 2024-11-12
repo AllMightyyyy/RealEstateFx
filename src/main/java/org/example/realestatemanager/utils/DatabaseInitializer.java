@@ -24,13 +24,12 @@ public class DatabaseInitializer {
             if (input == null) {
                 throw new RuntimeException("Sorry, unable to find application.properties");
             }
-            // Load the properties file
             prop.load(input);
             URL = prop.getProperty("db.url");
             DATABASE_NAME = prop.getProperty("db.name");
             USER = prop.getProperty("db.user");
             PASSWORD = prop.getProperty("db.password");
-            FULL_DB_URL = URL + DATABASE_NAME + "?useSSL=false&serverTimezone=UTC";
+            FULL_DB_URL = URL + DATABASE_NAME + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -70,17 +69,26 @@ public class DatabaseInitializer {
      * @throws SQLException if a database access error occurs
      */
     private static void createTablesIfNotExists() throws SQLException {
+        String createUsersTableSQL = "CREATE TABLE IF NOT EXISTS users (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                "name VARCHAR(100) NOT NULL, " +
+                "email VARCHAR(100) UNIQUE NOT NULL" +
+                ");";
+
         String createPropertiesTableSQL = "CREATE TABLE IF NOT EXISTS properties (" +
                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                "owner VARCHAR(100) NOT NULL, " +
+                "owner_id INT NOT NULL, " +
                 "description TEXT, " +
                 "location VARCHAR(100), " +
                 "size DOUBLE, " +
-                "price DOUBLE" +
+                "price DOUBLE, " +
+                "FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE" +
                 ");";
 
         try (Connection conn = DriverManager.getConnection(FULL_DB_URL, USER, PASSWORD);
              Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(createUsersTableSQL);
+            System.out.println("Table checked/created: users");
             stmt.executeUpdate(createPropertiesTableSQL);
             System.out.println("Table checked/created: properties");
         }
@@ -92,21 +100,40 @@ public class DatabaseInitializer {
      * @throws SQLException if a database access error occurs
      */
     private static void seedInitialData() throws SQLException {
-        String checkDataSQL = "SELECT COUNT(*) AS count FROM properties";
-        String insertSampleDataSQL = "INSERT INTO properties (owner, description, location, size, price) VALUES " +
-                "('John Doe', 'A lovely three-bedroom apartment', 'New York', 1200, 750000), " +
-                "('Jane Smith', 'Spacious two-bedroom condo', 'Los Angeles', 900, 620000), " +
-                "('Paul Brown', 'Beautiful villa with garden', 'Miami', 2500, 1250000);";
+        String checkUsersDataSQL = "SELECT COUNT(*) AS count FROM users";
+        String insertSampleUsersSQL = "INSERT INTO users (name, email) VALUES " +
+                "('John Doe', 'john.doe@example.com'), " +
+                "('Jane Smith', 'jane.smith@example.com'), " +
+                "('Paul Brown', 'paul.brown@example.com');";
+
+        String checkPropertiesDataSQL = "SELECT COUNT(*) AS count FROM properties";
+        String insertSamplePropertiesSQL = "INSERT INTO properties (owner_id, description, location, size, price) VALUES " +
+                "(1, 'A lovely three-bedroom apartment', 'New York', 1200, 750000), " +
+                "(2, 'Spacious two-bedroom condo', 'Los Angeles', 900, 620000), " +
+                "(3, 'Beautiful villa with garden', 'Miami', 2500, 1250000);";
 
         try (Connection conn = DriverManager.getConnection(FULL_DB_URL, USER, PASSWORD);
              Statement stmt = conn.createStatement()) {
 
-            ResultSet rs = stmt.executeQuery(checkDataSQL);
-            rs.next();
-            int rowCount = rs.getInt("count");
+            // Seed Users
+            ResultSet rsUsers = stmt.executeQuery(checkUsersDataSQL);
+            rsUsers.next();
+            int usersCount = rsUsers.getInt("count");
 
-            if (rowCount == 0) {
-                stmt.executeUpdate(insertSampleDataSQL);
+            if (usersCount == 0) {
+                stmt.executeUpdate(insertSampleUsersSQL);
+                System.out.println("Initial data seeded into users table.");
+            } else {
+                System.out.println("Users table already contains data; skipping seeding.");
+            }
+
+            // Seed Properties
+            ResultSet rsProperties = stmt.executeQuery(checkPropertiesDataSQL);
+            rsProperties.next();
+            int propertiesCount = rsProperties.getInt("count");
+
+            if (propertiesCount == 0) {
+                stmt.executeUpdate(insertSamplePropertiesSQL);
                 System.out.println("Initial data seeded into properties table.");
             } else {
                 System.out.println("Properties table already contains data; skipping seeding.");

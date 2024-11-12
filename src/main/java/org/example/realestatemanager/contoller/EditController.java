@@ -1,13 +1,18 @@
 package org.example.realestatemanager.contoller;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import org.example.realestatemanager.contoller.MainController;
 import org.example.realestatemanager.entity.Property;
+import org.example.realestatemanager.entity.User;
 import org.example.realestatemanager.utils.DatabaseUtil;
 
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * Controller class for the edit property window.
@@ -17,7 +22,7 @@ public class EditController {
     @FXML
     private Label idLabel;
     @FXML
-    private TextField ownerField;
+    private ComboBox<User> ownerComboBox;
     @FXML
     private TextArea descriptionField;
     @FXML
@@ -30,6 +35,7 @@ public class EditController {
     private Property property;
     private DatabaseUtil db;
     private MainController mainController;
+    private ObservableList<User> userList = FXCollections.observableArrayList();
 
     /**
      * Sets the property to be edited.
@@ -39,7 +45,7 @@ public class EditController {
     public void setProperty(Property property) {
         this.property = property;
         idLabel.setText(String.valueOf(property.getId()));
-        ownerField.setText(property.getOwner());
+        ownerComboBox.getSelectionModel().select(property.getOwner());
         descriptionField.setText(property.getDescription());
         locationField.setText(property.getLocation());
         sizeField.setText(String.valueOf(property.getSize()));
@@ -53,6 +59,7 @@ public class EditController {
      */
     public void setDatabase(DatabaseUtil db) {
         this.db = db;
+        loadUsers();
     }
 
     /**
@@ -65,21 +72,33 @@ public class EditController {
     }
 
     /**
+     * Loads all users into the ComboBox.
+     */
+    private void loadUsers() {
+        try {
+            List<User> users = db.getAllUsers();
+            userList.setAll(users);
+            ownerComboBox.setItems(userList);
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Load Error", e.getMessage());
+        }
+    }
+
+    /**
      * Handles the save action.
      *
      * @param event the action event
      */
     @FXML
     private void handleSave(ActionEvent event) {
-        String owner = ownerField.getText().trim();
+        User selectedUser = ownerComboBox.getSelectionModel().getSelectedItem();
         String description = descriptionField.getText().trim();
         String location = locationField.getText().trim();
         String sizeText = sizeField.getText().trim();
         String priceText = priceField.getText().trim();
 
-        // Validate inputs
-        if (owner.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Input Error", "Owner field cannot be empty.");
+        if (selectedUser == null) {
+            showAlert(Alert.AlertType.ERROR, "Input Error", "Please select an owner from the list.");
             return;
         }
 
@@ -93,8 +112,7 @@ public class EditController {
             return;
         }
 
-        // Update property object
-        property.setOwner(owner);
+        property.setOwnerId(selectedUser.getId());
         property.setDescription(description);
         property.setLocation(location);
         property.setSize(size);
@@ -127,7 +145,8 @@ public class EditController {
      */
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
-        alert.initOwner(idLabel.getScene().getWindow());
+        Stage stage = (Stage) idLabel.getScene().getWindow();
+        alert.initOwner(stage);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
