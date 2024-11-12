@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="org.example.realestatemanager.contoller.EditController" prefWidth="450" prefHeight="400">
+    <children>
+        <GridPane layoutX="20" layoutY="20" hgap="10" vgap="10" style="-fx-padding: 10;">
+            <columnConstraints>
+                <ColumnConstraints halignment="RIGHT" minWidth="100"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <rowConstraints>
+                <RowConstraints minHeight="30"/>
+                <RowConstraints minHeight="30"/>
+                <RowConstraints minHeight="60"/>
+                <RowConstraints minHeight="30"/>
+                <RowConstraints minHeight="30"/>
+                <RowConstraints minHeight="30"/>
+                <RowConstraints minHeight="40"/>
+            </rowConstraints>
+
+            <Label text="ID:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <Label fx:id="idLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+            <Label text="Owner:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextField fx:id="ownerField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+            <Label text="Description:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <TextArea fx:id="descriptionField" GridPane.rowIndex="2" GridPane.columnIndex="1" prefRowCount="3"/>
+
+            <Label text="Location:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <TextField fx:id="locationField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+            <Label text="Size:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <TextField fx:id="sizeField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+            <Label text="Price:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+            <TextField fx:id="priceField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+            <Button text="Save" onAction="#handleSave" GridPane.rowIndex="6" GridPane.columnIndex="1" alignment="CENTER_RIGHT" styleClass="save-button"/>
+        </GridPane>
+    </children>
+</AnchorPane>

@@ -1,0 +1,93 @@
+/* General Styles */
+.root {
+    -fx-font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #f4f4f4;
+}
+
+/* Center and Bottom Pane Padding */
+.center-pane {
+    -fx-padding: 10;
+}
+
+.bottom-pane {
+    -fx-padding: 10;
+}
+
+.edit-pane {
+    -fx-padding: 10;
+}
+
+/* TableView Styles */
+.table-view {
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #3c7fb1;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: #3c7fb1;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-view .table-row-cell:filled:selected, .table-view .table-cell:filled:selected {
+    -fx-background-color: #a3d0f3;
+}
+
+/* Button Styles */
+.button {
+    -fx-background-color: #3c7fb1;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 4;
+}
+
+.button:hover {
+    -fx-background-color: #335d80;
+}
+
+.add-button {
+    -fx-background-color: #28a745;
+}
+
+.add-button:hover {
+    -fx-background-color: #218838;
+}
+
+.save-button {
+    -fx-background-color: #007bff;
+}
+
+.save-button:hover {
+    -fx-background-color: #0069d9;
+}
+
+/* TextField and TextArea Styles */
+.text-field, .text-area {
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4;
+    -fx-padding: 4 8 4 8;
+}
+
+.text-field:focused, .text-area:focused {
+    -fx-border-color: #3c7fb1;
+}
+
+/* Pagination Styles */
+.pagination {
+    -fx-background-color: #f4f4f4;
+}
+
+.pagination .page-button {
+    -fx-background-color: #3c7fb1;
+    -fx-text-fill: white;
+}
+
+.pagination .page-button:hover {
+    -fx-background-color: #335d80;
+}
